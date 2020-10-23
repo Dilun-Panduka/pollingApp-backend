@@ -8,7 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class Poll extends UserDateAudit {
     private List<Choice> choices = new ArrayList<>();
 
     @NotNull
-    private LocalDate expirationDateTime;
+    private Instant expirationDateTime;
 
     public Long getId() {
         return id;
@@ -61,11 +61,11 @@ public class Poll extends UserDateAudit {
         this.choices = choices;
     }
 
-    public LocalDate getExpirationDateTime() {
+    public Instant getExpirationDateTime() {
         return expirationDateTime;
     }
 
-    public void setExpirationDateTime(LocalDate expirationDateTime) {
+    public void setExpirationDateTime(Instant expirationDateTime) {
         this.expirationDateTime = expirationDateTime;
     }
 
