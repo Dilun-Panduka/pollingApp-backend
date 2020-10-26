@@ -9,12 +9,14 @@ import com.example.dilun.polls.models.*;
 import com.example.dilun.polls.payload.PagedResponse;
 import com.example.dilun.polls.payload.PollRequest;
 import com.example.dilun.polls.payload.PollResponse;
+import com.example.dilun.polls.payload.VoteRequest;
 import com.example.dilun.polls.security.UserPrinciple;
 import com.example.dilun.polls.util.AppConstants;
 import com.example.dilun.polls.util.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -189,9 +191,48 @@ public class PollService {
                 userVote != null ? userVote.getChoice().getId() : null);
     }
 
-//    public PollResponse castVoteAndGetUpdatedPoll(){
-//
-//    }
+    public PollResponse castVoteAndGetUpdatedPoll(Long pollId, VoteRequest voteRequest, UserPrinciple currentUser) {
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new ResourceNotFoundException("Poll", "Id", pollId));
+
+        if (poll.getExpirationDateTime().isBefore(Instant.now())) {
+            throw new BadRequestException("Sorry! This poll has already expired");
+        }
+
+        User user = userRepository.getOne(currentUser.getId());
+
+        Choice selectedChoice = poll.getChoices().stream()
+                .filter(choice -> choice.getId().equals(voteRequest.getChoiceId()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Choice", "id", voteRequest.getChoiceId()));
+
+        Vote vote = new Vote();
+        vote.setPoll(poll);
+        vote.setUser(user);
+        vote.setChoice(selectedChoice);
+
+        try {
+            vote = voteRepository.save(vote);
+        } catch (DataIntegrityViolationException ex) {
+            LOGGER.info("User {} has already voted in Poll {}", currentUser.getId(), pollId);
+            throw new BadRequestException("Sorry! You have already cast your vote in this poll");
+        }
+
+        //----Vote is saved, Return Updated Poll Response----
+
+        //Retrieve Vote Counts of every choice belongs to current poll
+        List<ChoiceVoteCount> votes = voteRepository.countByPollIdGroupByChoiceId(pollId);
+
+        Map<Long, Long> choiceVoteMap = votes.stream()
+                .collect(Collectors.toMap(ChoiceVoteCount::getChoiceId, ChoiceVoteCount::getVoteCount));
+
+        //Retrieve Poll creator details
+        User creator = userRepository.findById(poll.getCreatedBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", poll.getCreatedBy()));
+
+        return ModelMapper.mapPollToPollResponse(poll, choiceVoteMap, creator, vote.getChoice().getId());
+
+    }
 
 
     private void validatePageNumberAndSize(int page, int size) {
