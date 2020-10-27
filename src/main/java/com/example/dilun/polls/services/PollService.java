@@ -77,7 +77,7 @@ public class PollService {
         );
     }
 
-    public PagedResponse<PollResponse> getCreatedBy(String username, UserPrinciple currentUser, int page, int size) {
+    public PagedResponse<PollResponse> getPollsCreatedBy(String username, UserPrinciple currentUser, int page, int size) {
         validatePageNumberAndSize(page, size);
 
         User user = userRepository.findByUsername(username)
