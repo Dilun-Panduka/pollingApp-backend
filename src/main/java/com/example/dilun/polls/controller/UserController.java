@@ -1,5 +1,7 @@
 package com.example.dilun.polls.controller;
 
+import java.util.List;
+
 import com.example.dilun.polls.Repositories.PollRepository;
 import com.example.dilun.polls.Repositories.UserRepository;
 import com.example.dilun.polls.Repositories.VoteRepository;
@@ -84,5 +86,10 @@ public class UserController {
                                                        @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE) int size
     ) {
         return pollService.getPollsVotedBy(username, currentUser, page, size);
+    }
+
+    @GetMapping("/allusers")
+    public List<User> getAllUsers(){
+        return userRepository.findAll(); 
     }
 }

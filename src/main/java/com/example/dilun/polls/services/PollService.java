@@ -50,7 +50,7 @@ public class PollService {
         validatePageNumberAndSize(page, size);
 
         //Retrieve Polls
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAr");
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
         Page<Poll> polls = pollRepository.findAll(pageable);
 
         if (polls.getNumberOfElements() == 0) {
